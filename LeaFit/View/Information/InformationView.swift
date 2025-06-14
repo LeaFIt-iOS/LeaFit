@@ -8,14 +8,14 @@
 import SwiftUI
 
 struct InformationView: View {
-    @State
-    private var activePage: Int = 0
+    @State private var activePage: Int = 0
+    @Environment(\.dismiss) var dismiss
     
     let titles: [String] = ["Welcome to", "Identify Problems Early", "What to Do Next? We’ve Got You", "Get the Best Detection Result", "Your Plants, Your Privacy", "Ready to"]
     let contents: [Any] = [InformationContent1View.self, InformationContent2View.self, InformationContent3View.self, InformationContent4View.self, InformationContent5View.self, InformationContent6View.self]
     
     var body: some View {
-        VStack(spacing: 34) {
+        VStack {
             Text(titles[activePage])
                 .font(.system(size: 34, weight: .bold, design: .default))
                 .foregroundColor(LeaFitColors.primary)
@@ -57,6 +57,20 @@ struct InformationView: View {
         .frame(maxHeight: .infinity)
         .padding(.horizontal, 18)
         .background(LeaFitColors.background)
+        .navigationBarBackButtonHidden(true)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarLeading) {
+                Button(action: {
+                    dismiss()
+                }) {
+                    HStack {
+                        Image(systemName: "chevron.left")
+                        Text("Back")
+                    }
+                }
+            }
+        }
+        .accentColor(LeaFitColors.primary)
     }
     
     func buildContent() -> AnyView {
@@ -74,6 +88,8 @@ struct InformationView: View {
     func nextPage() {
         if activePage < titles.count - 1 && activePage < contents.count - 1 {
             activePage += 1
+        } else {
+            dismiss()
         }
     }
     

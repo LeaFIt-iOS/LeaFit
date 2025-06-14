@@ -18,8 +18,9 @@ struct PlantListView: View {
         }
         .navigationTitle(title)
         .scrollContentBackground(.hidden) // hide default list background
-        .background(Color.appBackgroundColor.ignoresSafeArea())  
+        .background(LeaFitColors.background.ignoresSafeArea())
     }
+    
     
 }
 
