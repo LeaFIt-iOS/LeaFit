@@ -22,9 +22,9 @@ struct CameraResultView: View {
         .navigationBarBackButtonHidden(true)
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
-                Button("Next", action: {
-                    
-                })
+                NavigationLink(destination: ResultView()) {
+                    Text("Next")
+                }
             }
             
             ToolbarItem(placement: .navigationBarLeading) {
