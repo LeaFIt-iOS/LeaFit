@@ -48,7 +48,7 @@ struct MainMenuView: View {
                         Spacer()
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .background(Color.appBackgroundColor)
+                    .background(LeaFitColors.background)
                 } else {
                     List {
                         NavigationLink(destination: PlantListView(plants: categoriesViewModel.allPlants, title: "All Plants")) {
@@ -127,7 +127,6 @@ struct MainMenuView: View {
                                             .disabled(isEditMode)
                                             
                                             if isEditMode {
-                                          
                                                 Button(action: {
                                                     selectedCategory = category
                                                     showEditSheet = true
@@ -150,11 +149,10 @@ struct MainMenuView: View {
                                 }
                             }
                     }
-                    .background(Color.appBackgroundColor)
+                    .background(LeaFitColors.background)
                     .scrollContentBackground(.hidden)
                 }
             }
-
             .navigationTitle("LeaFit")
             .navigationBarTitleDisplayMode(.large)
             .toolbar {
@@ -171,66 +169,68 @@ struct MainMenuView: View {
             .onAppear {
                 categoriesViewModel.setModelContext(modelContext)
             }
-        }
-        .toolbar {
-            ToolbarItemGroup(placement: .bottomBar) {
-                HStack {
-                    Button(action: {}) {
-                        Image(systemName: "info.circle")
-                            .foregroundStyle(Color(hex: "428D6D"))
-                    }
-                    Spacer()
-                    Button(action: {}) {
-                        Image(systemName: "camera")
-                            .foregroundStyle(Color(hex: "428D6D"))
+            .toolbar {
+                ToolbarItemGroup(placement: .bottomBar) {
+                    HStack {
+                        NavigationLink(destination: InformationView()) {
+                            Image(systemName: "info.circle")
+                                .foregroundStyle(Color(hex: "428D6D"))
+                        }
+                        
+                        Spacer()
+                        
+                        NavigationLink(destination: CameraRulesView()) {
+                            Image(systemName: "camera")
+                                .foregroundStyle(Color(hex: "428D6D"))
+                        }
                     }
                 }
             }
-        }
-        .actionSheet(isPresented: $showEditSheet) {
-            ActionSheet(
-                title: Text("\(selectedCategory?.name ?? "Select a category to edit")"),
-                buttons: [
-                    .default(Text("Rename")) {
-                        if let category = selectedCategory {
-                            categoryToRename = category
-                            renameCategoryName = category.name
-                            showRenameCategory = true
-                        }
-                    },
-                    .destructive(Text("Delete")) {
-                        if let category = selectedCategory {
-                            categoriesViewModel.deleteCategory(category)
-                        }
-                    },
-                    .cancel()
-                ]
-            )
-        }
-        .alert("Rename Category", isPresented: $showRenameCategory) {
-            TextField("Category name", text: $renameCategoryName)
-                .foregroundColor(.primary)
-            Button("Cancel", role: .cancel) {
-                renameCategoryName = ""
-                categoryToRename = nil
+            .actionSheet(isPresented: $showEditSheet) {
+                ActionSheet(
+                    title: Text("\(selectedCategory?.name ?? "Select a category to edit")"),
+                    buttons: [
+                        .default(Text("Rename")) {
+                            if let category = selectedCategory {
+                                categoryToRename = category
+                                renameCategoryName = category.name
+                                showRenameCategory = true
+                            }
+                        },
+                        .destructive(Text("Delete")) {
+                            if let category = selectedCategory {
+                                categoriesViewModel.deleteCategory(category)
+                            }
+                        },
+                        .cancel()
+                    ]
+                )
             }
-            Button("Save") {
-                if let category = categoryToRename,
-                   !renameCategoryName.isEmpty,
-                   !categoriesViewModel.categoryExists(name: renameCategoryName, excluding: category) {
-                    categoriesViewModel.renameCategory(category, newName: renameCategoryName)
+            .alert("Rename Category", isPresented: $showRenameCategory) {
+                TextField("Category name", text: $renameCategoryName)
+                    .foregroundColor(.primary)
+                Button("Cancel", role: .cancel) {
                     renameCategoryName = ""
                     categoryToRename = nil
                 }
-            }
-            .disabled(renameCategoryName.isEmpty ||
-                     renameCategoryName.count > 24 ||
-                     (categoryToRename != nil && categoriesViewModel.categoryExists(name: renameCategoryName, excluding: categoryToRename!)))
-        } message: {
-            if renameCategoryName.count > 24 {
-                Text("Category name must be 24 characters or less")
-            } else if let category = categoryToRename, categoriesViewModel.categoryExists(name: renameCategoryName, excluding: category) {
-                Text("A category with this name already exists")
+                Button("Save") {
+                    if let category = categoryToRename,
+                       !renameCategoryName.isEmpty,
+                       !categoriesViewModel.categoryExists(name: renameCategoryName, excluding: category) {
+                        categoriesViewModel.renameCategory(category, newName: renameCategoryName)
+                        renameCategoryName = ""
+                        categoryToRename = nil
+                    }
+                }
+                .disabled(renameCategoryName.isEmpty ||
+                          renameCategoryName.count > 24 ||
+                          (categoryToRename != nil && categoriesViewModel.categoryExists(name: renameCategoryName, excluding: categoryToRename!)))
+            } message: {
+                if renameCategoryName.count > 24 {
+                    Text("Category name must be 24 characters or less")
+                } else if let category = categoryToRename, categoriesViewModel.categoryExists(name: renameCategoryName, excluding: category) {
+                    Text("A category with this name already exists")
+                }
             }
         }
     }
