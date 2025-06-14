@@ -12,4 +12,7 @@ enum LeaFitColors {
     static let background = Color(hex: "E1EEDF")
     static let button = Color(hex: "BEDCBA")
     static let textGrey = Color(hex: "AEAEB2")
+    static let light = Color(hex: "FAFFF9")
+    static let green = Color(hex: "39DC23")
 }
+
