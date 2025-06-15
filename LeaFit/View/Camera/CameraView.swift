@@ -47,7 +47,7 @@ struct CameraView: View {
                                 Image("img-camera-border")
                                     .resizable()
                                     .renderingMode(.template)
-                                    .foregroundColor(.white)
+                                    .foregroundColor(viewModel.isAloeDetected ? .green : .red)
                                 
                             )
                             .aspectRatio(1.0, contentMode: .fit)
@@ -64,6 +64,7 @@ struct CameraView: View {
                             Spacer()
                             
                             Button(action: {
+                                print("📱 Button tapped")
                                 viewModel.capturePhoto()
                             }) {
                                 Circle()
@@ -73,7 +74,6 @@ struct CameraView: View {
                                         Circle().stroke(Color.white, lineWidth: 2).frame(width: 78, height: 78)
                                     )
                             }
-                            .disabled(!viewModel.isSessionRunning || viewModel.isCapturing)
                             
                             Spacer()
                         }
@@ -129,26 +129,25 @@ struct CameraView: View {
 
 struct CameraPreview: UIViewRepresentable {
     let session: AVCaptureSession
-    
-    func makeUIView(context: Context) -> UIView {
-        let view = UIView()
-        
-        let previewLayer = AVCaptureVideoPreviewLayer(session: session)
-        previewLayer.videoGravity = .resizeAspectFill
-        
-        previewLayer.frame = view.bounds
-        view.layer.addSublayer(previewLayer)
-        
-        DispatchQueue.main.async {
-            previewLayer.frame = view.bounds
-        }
-        
+
+    func makeUIView(context: Context) -> CameraPreviewView {
+        let view = CameraPreviewView()
+        view.videoPreviewLayer.session = session
+        view.videoPreviewLayer.videoGravity = .resizeAspectFill
         return view
     }
-    
-    func updateUIView(_ uiView: UIView, context: Context) {
-        if let previewLayer = uiView.layer.sublayers?.first(where: { $0 is AVCaptureVideoPreviewLayer }) as? AVCaptureVideoPreviewLayer {
-            previewLayer.frame = uiView.bounds
-        }
+
+    func updateUIView(_ uiView: CameraPreviewView, context: Context) {
+        uiView.videoPreviewLayer.connection?.videoOrientation = .portrait
+    }
+}
+
+final class CameraPreviewView: UIView {
+    override class var layerClass: AnyClass {
+        return AVCaptureVideoPreviewLayer.self
+    }
+
+    var videoPreviewLayer: AVCaptureVideoPreviewLayer {
+        return layer as! AVCaptureVideoPreviewLayer
     }
 }

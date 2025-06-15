@@ -11,37 +11,70 @@ import Vision
 import CoreImage
 import CoreImage.CIFilterBuiltins
 import UIKit
+import CoreML
 
-class CameraViewModel: NSObject, ObservableObject, AVCapturePhotoCaptureDelegate {
+class CameraViewModel: NSObject, ObservableObject, AVCapturePhotoCaptureDelegate, AVCaptureVideoDataOutputSampleBufferDelegate {
     let session = AVCaptureSession()
     private let output = AVCapturePhotoOutput()
     private var isConfigured = false
+    private var model: VNCoreMLModel?
     
+    @Published var isAloeDetected: Bool = false
     @Published var isCapturing = false
     @Published var capturedImage: UIImage?
     @Published var isSessionRunning = false
     
     override init() {
         super.init()
-        configure()
+        setupModel()
+        setupCamera()
     }
     
-    private func configure() {
+    private func setupModel() {
+        do {
+            model = try VNCoreMLModel(for: AloeImageClassifier().model)
+        } catch {
+            print("❌ Failed to load model: \(error)")
+        }
+    }
+    
+    private func setupCamera() {
         session.beginConfiguration()
         session.sessionPreset = .photo
-        
-        guard let device = AVCaptureDevice.default(for: .video),
-              let input = try? AVCaptureDeviceInput(device: device),
-              session.canAddInput(input),
-              session.canAddOutput(output) else {
+
+        guard let camera = AVCaptureDevice.default(for: .video),
+              let input = try? AVCaptureDeviceInput(device: camera),
+              session.canAddInput(input) else {
+            print("❌ Cannot add camera input")
             session.commitConfiguration()
             return
         }
-        
+
         session.addInput(input)
-        session.addOutput(output)
+
+        // ✅ Add photo output
+        if session.canAddOutput(output) {
+            session.addOutput(output)
+        } else {
+            print("❌ Cannot add photo output")
+        }
+
+        // ✅ Add video output for real-time classification
+        let videoOutput = AVCaptureVideoDataOutput()
+        videoOutput.setSampleBufferDelegate(self, queue: DispatchQueue(label: "videoQueue"))
+        videoOutput.alwaysDiscardsLateVideoFrames = true
+
+        if session.canAddOutput(videoOutput) {
+            session.addOutput(videoOutput)
+        } else {
+            print("❌ Cannot add video output")
+        }
+
         session.commitConfiguration()
-        
+        DispatchQueue.main.async {
+            self.session.startRunning()
+        }
+
         isConfigured = true
     }
     
@@ -70,15 +103,21 @@ class CameraViewModel: NSObject, ObservableObject, AVCapturePhotoCaptureDelegate
     }
     
     func capturePhoto() {
-        guard !isCapturing else { return }
+        guard !isCapturing else {
+            print("📸 Skipping: Already capturing")
+            return
+        }
+
+        print("📸 Triggering photo capture")
+
         isCapturing = true
-        
+
         DispatchQueue.main.asyncAfter(deadline: .now() + 5) {
             if self.isCapturing {
                 self.isCapturing = false
             }
         }
-        
+
         let settings = AVCapturePhotoSettings()
         output.capturePhoto(with: settings, delegate: self)
     }
@@ -86,28 +125,47 @@ class CameraViewModel: NSObject, ObservableObject, AVCapturePhotoCaptureDelegate
     func photoOutput(_ output: AVCapturePhotoOutput,
                      didFinishProcessingPhoto photo: AVCapturePhoto,
                      error: Error?) {
-        print("Photo captured")
-        
+        print("📸 Photo delegate called")
+
         guard let data = photo.fileDataRepresentation(),
               let rawImage = UIImage(data: data) else {
-            DispatchQueue.main.async {
-                self.isCapturing = false
-            }
+            print("❌ Could not get image data")
+            isCapturing = false
             return
         }
-        
+
         let orientedImage = fixOrientation(for: rawImage)
-        
-        print("Removing background")
+
         removeBackground(from: orientedImage) { [weak self] result in
             DispatchQueue.main.async {
                 self?.capturedImage = result
                 self?.isCapturing = false
-                print("Background removed, image ready")
+                print("✅ Captured and processed image")
             }
         }
     }
     
+    func captureOutput(_ output: AVCaptureOutput,
+                       didOutput sampleBuffer: CMSampleBuffer,
+                       from connection: AVCaptureConnection) {
+        guard let model = model,
+              let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else {
+            return
+        }
+        
+        let request = VNCoreMLRequest(model: model) { [weak self] request, _ in
+            guard let results = request.results as? [VNClassificationObservation],
+                  let topResult = results.first else { return }
+            
+            DispatchQueue.main.async {
+                // Result
+                self?.isAloeDetected = topResult.identifier == "aloe"
+            }
+        }
+        
+        let handler = VNImageRequestHandler(cvPixelBuffer: pixelBuffer, orientation: .up)
+        try? handler.perform([request])
+    }
     
     func reset() {
         DispatchQueue.main.async {
@@ -168,7 +226,7 @@ class CameraViewModel: NSObject, ObservableObject, AVCapturePhotoCaptureDelegate
             } catch {
                 print("❌ Vision error: \(error.localizedDescription) — returning original")
             }
-            
+
             completion(inputImage)
         }
     }

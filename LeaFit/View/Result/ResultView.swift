@@ -8,11 +8,13 @@
 import SwiftUI
 
 struct ResultView: View {
+    var image: UIImage
+
     @State var showDiagnose = true
     @State var showDiagnoseExplanation = false
     @State var showTreatmentExplanation = false
     
-    private var treatments: [String] = [
+    private let treatments: [String] = [
         "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat",
         "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua",
         "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua"
@@ -28,10 +30,13 @@ struct ResultView: View {
                         HStack(spacing: 16) {
                             RoundedRectangle(cornerRadius: 15)
                                 .fill(Color.gray)
+                                .opacity(0.2)
                                 .frame(width: 175, height: 175)
+                                .overlay(Image(uiImage: image).resizable().scaledToFit().frame(width: 175, height: 175))
                             
                             RoundedRectangle(cornerRadius: 15)
                                 .fill(Color.gray)
+                                .opacity(0.2)
                                 .frame(width: 175, height: 175)
                         }
                     )
@@ -140,8 +145,4 @@ struct ResultView: View {
         .background(LeaFitColors.background)
     }
     
-}
-
-#Preview {
-    ResultView()
 }
