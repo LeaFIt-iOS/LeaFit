@@ -9,6 +9,7 @@ import SwiftUI
 
 struct ResultView: View {
     var image: UIImage
+    var originalImage: UIImage
 
     @State var showDiagnose = true
     @State var showDiagnoseExplanation = false
@@ -32,12 +33,13 @@ struct ResultView: View {
                                 .fill(Color.gray)
                                 .opacity(0.2)
                                 .frame(width: 175, height: 175)
-                                .overlay(Image(uiImage: image).resizable().scaledToFit().frame(width: 175, height: 175))
+                                .overlay(Image(uiImage: originalImage).resizable().scaledToFit().frame(width: 175, height: 175))
                             
                             RoundedRectangle(cornerRadius: 15)
                                 .fill(Color.gray)
                                 .opacity(0.2)
                                 .frame(width: 175, height: 175)
+                                .overlay(Image(uiImage: image).resizable().scaledToFit().frame(width: 175, height: 175))
                         }
                     )
                 

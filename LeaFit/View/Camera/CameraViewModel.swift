@@ -22,6 +22,7 @@ class CameraViewModel: NSObject, ObservableObject, AVCapturePhotoCaptureDelegate
     @Published var isAloeDetected: Bool = false
     @Published var isCapturing = false
     @Published var capturedImage: UIImage?
+    @Published var originalImage: UIImage?
     @Published var isSessionRunning = false
     
     override init() {
@@ -138,6 +139,7 @@ class CameraViewModel: NSObject, ObservableObject, AVCapturePhotoCaptureDelegate
 
         removeBackground(from: orientedImage) { [weak self] result in
             DispatchQueue.main.async {
+                self?.originalImage = orientedImage
                 self?.capturedImage = result
                 self?.isCapturing = false
                 print("✅ Captured and processed image")

@@ -9,6 +9,7 @@ import SwiftUI
 
 struct CameraResultView: View {
     var image: UIImage
+    var originalImage: UIImage
     var onRetake: @MainActor () -> Void
     
     var body: some View {
@@ -22,7 +23,7 @@ struct CameraResultView: View {
         .navigationBarBackButtonHidden(true)
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
-                NavigationLink(destination: ResultView(image: image)) {
+                NavigationLink(destination: ResultView(image: image, originalImage: originalImage)) {
                     Text("Next")
                 }
             }

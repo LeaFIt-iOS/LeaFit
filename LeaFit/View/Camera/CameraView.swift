@@ -22,6 +22,7 @@ struct CameraView: View {
             if let image = capturedImage {
                 CameraResultView(
                     image: image,
+                    originalImage: viewModel.originalImage!,
                     onRetake: {
                         withAnimation {
                             capturedImage = nil
